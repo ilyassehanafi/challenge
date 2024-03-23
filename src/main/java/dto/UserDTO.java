@@ -20,7 +20,6 @@ public class UserDTO {
 
     private String country;
 
-    //link to an image
     private String avatar;
 
     private String company;

@@ -1,5 +1,6 @@
-package entity;
+package data.entity;
 
+import data.enums.RoleType;
 import jakarta.persistence.*;
 import lombok.Data;
 

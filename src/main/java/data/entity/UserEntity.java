@@ -1,11 +1,10 @@
-package entity;
+package data.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 @Entity
 @Table(name = "user")

@@ -1,4 +1,4 @@
-package data.entity;
+package com.example.demo.data.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -7,11 +7,13 @@ import java.util.Collection;
 import java.util.Date;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 @Data
 public class UserEntity {
+
     @Id
     @GeneratedValue
+    @Column(name = "user_id")
     private Long id;
 
     private String firstName;
@@ -24,7 +26,6 @@ public class UserEntity {
 
     private String country;
 
-    //link to an image
     private String avatar;
 
     private String company;
@@ -40,5 +41,8 @@ public class UserEntity {
     private String password;
 
     @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_role",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Collection<RoleEntity> roles;
 }

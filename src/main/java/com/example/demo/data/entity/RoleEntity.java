@@ -1,6 +1,6 @@
-package data.entity;
+package com.example.demo.data.entity;
 
-import data.enums.RoleType;
+import com.example.demo.data.enums.RoleType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,6 +10,7 @@ import lombok.Data;
 public class RoleEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "role_id")
     private Long id;
 
     @Enumerated(EnumType.STRING)

@@ -3,11 +3,17 @@ package com.example.demo.service;
 import com.example.demo.data.entity.UserEntity;
 import com.example.demo.data.enums.RoleType;
 import com.example.demo.data.repository.UserRepository;
+import com.example.demo.dto.CreationDetail;
 import com.github.javafaker.Faker;
 import com.example.demo.dto.UserDTO;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -32,26 +38,14 @@ public class UserServiceImpl implements UserService{
     // Number of threads in the thread pool
     private static final int THREAD_POOL_SIZE = 10;
 
-    public List<UserDTO> generateUsers(int count) throws InterruptedException, ExecutionException {
-        ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
-        List<Future<UserDTO>> futures = new ArrayList<>();
-
-        try {
-            for (int i = 0; i < count; i++) {
-                Future<UserDTO> future = executor.submit(this::generateUser);
-                futures.add(future);
-            }
-
-            List<UserDTO> generatedUsers = new ArrayList<>();
-            for (Future<UserDTO> future : futures) {
-                generatedUsers.add(future.get());
-            }
-
-            return generatedUsers;
-        } finally {
-            executor.shutdown();
+    public List<UserDTO> generateUsers(int count) {
+        List<UserDTO> userDTOList = new ArrayList<>();
+        for(int i=0; i<count; i++){
+            userDTOList.add(generateUser());
         }
+        return userDTOList;
     }
+
     private UserDTO generateUser(){
         Faker faker = new Faker();
         RoleType[] roles = RoleType.values();
@@ -72,5 +66,14 @@ public class UserServiceImpl implements UserService{
                 .password(faker.internet().password(6,10))
                 .role(role)
                 .build();
+    }
+
+    @SneakyThrows
+    @Override
+    public CreationDetail saveUsers(MultipartFile file) {
+        BufferedReader buffer = new BufferedReader(new InputStreamReader(file.getInputStream()));
+        String line = buffer.readLine();
+        System.out.println(line);
+        return null;
     }
 }

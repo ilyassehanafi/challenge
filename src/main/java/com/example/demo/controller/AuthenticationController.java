@@ -1,21 +1,31 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.AuthRequestDTO;
+import com.example.demo.dto.AuthResponseDTO;
+import com.example.demo.service.AuthenticationService;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("api/auth/")
+@RestController()
+@RequestMapping("api/")
+@AllArgsConstructor
 public class AuthenticationController {
 
+	private AuthenticationService authenticationService;
 
-	@PostMapping
-	public ResponseEntity<String> authenticate(@RequestBody AuthRequestDTO authRequestDTO){
-		var jwtToken = 
-		return ResponseEntity.ok().body("");
+	@PostMapping(value = "auth", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<AuthResponseDTO> authenticate(@RequestBody AuthRequestDTO authRequestDTO){
+		var jwtToken = authenticationService.login(authRequestDTO.getUsername(),authRequestDTO.getPassword());
+		AuthResponseDTO authResponseDTO = AuthResponseDTO.builder()
+				.accessToken(jwtToken)
+				.build();
+		return ResponseEntity.ok().body(authResponseDTO);
 	}
 
 }

@@ -15,6 +15,8 @@ import java.util.UUID;
 public class JwtUtils {
 	private static final SecretKey secretKey = Jwts.SIG.HS256.key().build();
 	private static final String ISSUER = "coding_streams_auth_server";
+
+	private static final String BEARER = "Bearer ";
 	private JwtUtils() {
 	}
 
@@ -48,8 +50,7 @@ public class JwtUtils {
 		var jwtExpirationInMinutes = 10;
 
 		var expiration = DateUtils.addMinutes(currentDate, jwtExpirationInMinutes);
-
-		return Jwts.builder()
+		return BEARER + Jwts.builder()
 				.id(UUID.randomUUID().toString())
 				.issuer(ISSUER)
 				.subject(username)

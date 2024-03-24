@@ -21,10 +21,13 @@ public class WebSecurityConfig  {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors(AbstractHttpConfigurer::disable)
             .csrf(AbstractHttpConfigurer::disable)
-            .headers(headerConfigurer->{
-                headerConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable);})
-            .authorizeHttpRequests(requestMatcher -> {
-                requestMatcher.requestMatchers("/api/users/**", "/h2-console/**").permitAll().anyRequest().authenticated();})
+            .headers(headerConfigurer-> headerConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+            .authorizeHttpRequests(
+                    requestMatcher -> requestMatcher.
+                            requestMatchers("/api/users/**", "/h2-console/**","/api/auth/**")
+                            .permitAll()
+                            .anyRequest()
+                            .authenticated())
             .sessionManagement(sessionManagementConfigurer-> sessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .httpBasic(Customizer.withDefaults());

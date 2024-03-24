@@ -10,7 +10,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class CreationDetail {
-    int totalRecordsCount;
-    int totalRecordsSaved;
-    int totalRecordsNotSaved;
+    int totalRecordsCount=0;
+    int totalRecordsSaved=0;
+    int totalRecordsNotSaved=0;
+
+	public void incrementRecordsSaved() {
+		this.totalRecordsSaved++;
+	}
+
+	public void incrementRecordsNotSaved() {
+		this.totalRecordsNotSaved++;
+	}
 }

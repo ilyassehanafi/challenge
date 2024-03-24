@@ -1,48 +1,66 @@
 package com.example.demo.service;
 
+import com.example.demo.data.entity.RoleEntity;
 import com.example.demo.data.entity.UserEntity;
 import com.example.demo.data.enums.RoleType;
+import com.example.demo.data.repository.RoleRepository;
 import com.example.demo.data.repository.UserRepository;
 import com.example.demo.dto.CreationDetail;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 import com.example.demo.dto.UserDTO;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StopWatch;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
-public class UserServiceImpl implements UserService{
+@AllArgsConstructor
+public class UserServiceImpl implements UserService, UserDetailsService {
 
-    @Autowired
+    private static final int COUNT_WARN_VALUE = 1000;
+
     private UserRepository userRepository;
 
+    private BCryptPasswordEncoder passwordEncoder;
+
+    private RoleRepository roleRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public List<UserEntity> findAllUsers() {
         return userRepository.findAll();
     }
 
-    // Number of threads in the thread pool
-    private static final int THREAD_POOL_SIZE = 10;
-
     public List<UserDTO> generateUsers(int count) {
-        List<UserDTO> userDTOList = new ArrayList<>();
-        for(int i=0; i<count; i++){
-            userDTOList.add(generateUser());
-        }
+        if (count>COUNT_WARN_VALUE)
+            Logger.getAnonymousLogger().warning("File generation will take longer time to complete!");
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        List<UserDTO> userDTOList = IntStream.range(0, count)
+                .mapToObj(i -> generateUser())
+                .collect(Collectors.toList());
+        stopWatch.stop();
+        //not working
+        Logger.getAnonymousLogger().info("total Time for generating Users : " + stopWatch.getTotalTimeSeconds()/60 + " Mins");
         return userDTOList;
     }
 
@@ -70,10 +88,73 @@ public class UserServiceImpl implements UserService{
 
     @SneakyThrows
     @Override
+    @Transactional
     public CreationDetail saveUsers(MultipartFile file) {
-        BufferedReader buffer = new BufferedReader(new InputStreamReader(file.getInputStream()));
-        String line = buffer.readLine();
-        System.out.println(line);
-        return null;
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()));
+        List<UserDTO> userDTOList = objectMapper.readValue(br.readLine(), new TypeReference<>() {});
+        for (UserDTO userDTO: userDTOList) {
+            System.out.println(userDTO);
+        }
+        List<UserEntity> usersEnityList = this.transformDtoToEntity(userDTOList);
+        return saveAllUsers(usersEnityList);
+    }
+
+    private List<UserEntity> transformDtoToEntity(List<UserDTO> usersList) {
+        return usersList.stream().map(userDTO -> {
+            String role = userDTO.getRole();
+            RoleEntity roleEntity = RoleEntity.builder().roleType(RoleType.valueOf(role)).build();
+            List<RoleEntity> roleEntities = Collections.singletonList(roleEntity);
+            return  UserEntity.builder()
+                    .firstName(userDTO.getFirstName())
+                    .lastName(userDTO.getLastName())
+                    .birthDate(userDTO.getBirthDate())
+                    .city(userDTO.getCity())
+                    .country(userDTO.getCountry())
+                    .avatar(userDTO.getAvatar())
+                    .company(userDTO.getCompany())
+                    .jobPosition(userDTO.getJobPosition())
+                    .mobile(userDTO.getMobile())
+                    .email(userDTO.getEmail())
+                    .username(userDTO.getUsername())
+                    .password(userDTO.getPassword())
+                    .roles(roleEntities)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    private CreationDetail saveAllUsers(List<UserEntity> users){
+        CreationDetail creationDetail = new CreationDetail();
+        creationDetail.setTotalRecordsCount(users.size());
+        for(UserEntity user : users){
+            if(userRepository.existsByUsernameOrEmail(user.getUsername(),user.getEmail())){
+                creationDetail.incrementRecordsNotSaved();
+            }else{
+                user.setPassword(this.passwordEncoder.encode(user.getPassword()));
+                Collection<RoleEntity> roles = user.getRoles();
+                for (RoleEntity role: roles) {
+                    if(roleRepository.findByRoleType(role.getRoleType()) == null){
+                        roleRepository.save(role);
+                    }else{
+                        user.setRoles(Collections.
+                                singletonList(roleRepository.findByRoleType(role.getRoleType())));
+                    }
+                }
+                this.saveUser(user);
+                creationDetail.incrementRecordsSaved();
+            }
+        }
+        return creationDetail;
+    }
+
+    public UserEntity saveUser(UserEntity user){
+        return userRepository.save(user);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findUserEntityByEmailOrUsername(username, username)
+                .orElseThrow(()-> new UsernameNotFoundException("username or email not found"));
     }
 }

@@ -12,13 +12,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-@RestController("/api/users")
+@RestController()
+@RequestMapping("api/users/")
 @AllArgsConstructor
 public class UsersController {
 
     private UserServiceImpl userService;
 
-    @GetMapping(value = "/generate", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "generate", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserDTO>> generateUsers(@RequestParam int count) {
         List<UserDTO> users =  this.userService.generateUsers(count) ;
         return ResponseEntity.ok()
@@ -26,9 +27,13 @@ public class UsersController {
                 .body(users);
     }
 
-    @PostMapping(value = "/batch")
-    public ResponseEntity<CreationDetail> saveUsers(@RequestBody MultipartFile file) {
+    @PostMapping(value = "batch")
+    public ResponseEntity<CreationDetail> saveUsers(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()){
+            return ResponseEntity.ok(new CreationDetail());
+        }
         CreationDetail creationDetail = this.userService.saveUsers(file);
-        return ResponseEntity.ok(new CreationDetail());
+
+        return ResponseEntity.ok(creationDetail);
     }
 }

@@ -26,6 +26,8 @@ public class WebSecurityConfig  {
                     requestMatcher -> requestMatcher.
                             requestMatchers("/api/users/**", "/h2-console/**","/api/auth/**")
                             .permitAll()
+                            .requestMatchers("/api/users/me")
+                            .authenticated()
                             .anyRequest()
                             .authenticated())
             .sessionManagement(sessionManagementConfigurer-> sessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

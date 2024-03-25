@@ -27,7 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 		// Fetch token from request
-		var jwtTokenOptional = getTokenFromRequest(request);
+		var jwtTokenOptional = JwtUtils.getTokenFromRequest(request);
 
 		// Validate jwt token -> JWT utils
 		jwtTokenOptional.ifPresent(jwtToken -> {
@@ -52,17 +52,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 		// Pass request and response to next filter
 		filterChain.doFilter(request, response);
-	}
-
-	private Optional<String> getTokenFromRequest(HttpServletRequest request) {
-		// Extract authentication header
-		var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-		// Bearer <JWT TOKEN>
-		if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
-			return Optional.of(authHeader.substring(7));
-		}
-
-		return Optional.empty();
 	}
 }

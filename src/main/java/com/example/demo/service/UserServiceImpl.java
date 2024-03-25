@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.configuration.JwtUtils;
 import com.example.demo.data.entity.RoleEntity;
 import com.example.demo.data.entity.UserEntity;
 import com.example.demo.data.enums.RoleType;
@@ -12,6 +13,7 @@ import com.github.javafaker.Faker;
 import com.example.demo.dto.UserDTO;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,7 +34,7 @@ import java.util.stream.IntStream;
 
 @Service
 @AllArgsConstructor
-public class UserServiceImpl implements UserService, UserDetailsService {
+public class UserServiceImpl implements UserService {
 
     private static final int COUNT_WARN_VALUE = 1000;
 
@@ -41,9 +43,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private BCryptPasswordEncoder passwordEncoder;
 
     private RoleRepository roleRepository;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Override
     public List<UserEntity> findAllUsers() {
@@ -101,6 +100,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         return saveAllUsers(usersEnityList);
     }
 
+    @Override
+    public UserDTO getActualUser(HttpServletRequest http) {
+        String token = JwtUtils.getTokenFromRequest(http).get();
+        String email = JwtUtils.getUsernameFromToken(token).get();
+        Optional<UserEntity> user = userRepository.findUserEntityByEmail(email);
+        return transformEntityToDto(user.get());
+
+    }
+
     private List<UserEntity> transformDtoToEntity(List<UserDTO> usersList) {
         return usersList.stream().map(userDTO -> {
             String role = userDTO.getRole();
@@ -122,6 +130,24 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                     .roles(roleEntities)
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    private UserDTO transformEntityToDto(UserEntity userEntity) {
+        return  UserDTO.builder()
+                    .firstName(userEntity.getFirstName())
+                    .lastName(userEntity.getLastName())
+                    .birthDate(userEntity.getBirthDate())
+                    .city(userEntity.getCity())
+                    .country(userEntity.getCountry())
+                    .avatar(userEntity.getAvatar())
+                    .company(userEntity.getCompany())
+                    .jobPosition(userEntity.getJobPosition())
+                    .mobile(userEntity.getMobile())
+                    .email(userEntity.getEmail())
+                    .username(userEntity.getUsername())
+                    .password(userEntity.getPassword())
+                    .role(userEntity.getRoles().toString())
+                    .build();
     }
 
     private CreationDetail saveAllUsers(List<UserEntity> users){
@@ -153,8 +179,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findUserEntityByEmailOrUsername(username, username)
-                .orElseThrow(()-> new UsernameNotFoundException("username or email not found"));
+    public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
+        Optional<UserEntity> userEntityByUsername = userRepository.findUserEntityByUsername(login);
+
+        return userEntityByUsername
+                .or(() -> userRepository.findUserEntityByEmail(login))
+                .orElseThrow(() -> new UsernameNotFoundException("username or email not found"));
     }
+
+
 }

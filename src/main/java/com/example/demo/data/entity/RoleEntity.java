@@ -22,4 +22,9 @@ public class RoleEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "role_type")
     private RoleType roleType;
+
+    @Override
+    public String toString() {
+        return this.roleType.name();
+    }
 }

@@ -3,8 +3,11 @@ package com.example.demo.configuration;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -58,5 +61,16 @@ public class JwtUtils {
 				.issuedAt(currentDate)
 				.expiration(expiration)
 				.compact();
+	}
+	public static Optional<String> getTokenFromRequest(HttpServletRequest request) {
+		// Extract authentication header
+		var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+		// Bearer <JWT TOKEN>
+		if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+			return Optional.of(authHeader.substring(7));
+		}
+
+		return Optional.empty();
 	}
 }

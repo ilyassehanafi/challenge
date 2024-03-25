@@ -1,8 +1,10 @@
 package com.example.demo.controller;
 
+import com.example.demo.configuration.JwtUtils;
 import com.example.demo.dto.CreationDetail;
 import com.example.demo.service.UserServiceImpl;
 import com.example.demo.dto.UserDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -35,5 +37,11 @@ public class UsersController {
         CreationDetail creationDetail = this.userService.saveUsers(file);
 
         return ResponseEntity.ok(creationDetail);
+    }
+
+    @GetMapping(value = "me")
+    public ResponseEntity<UserDTO> viewActualUser(HttpServletRequest http){
+       return ResponseEntity.ok()
+               .body(this.userService.getActualUser(http));
     }
 }

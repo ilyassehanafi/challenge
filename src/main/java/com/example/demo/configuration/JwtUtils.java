@@ -47,7 +47,7 @@ public class JwtUtils {
 		return claimsOptional.map(Claims::getSubject);
 	}
 
-	public static String generateToken(String username) {
+	public static String generateToken(String email) {
 
 		var currentDate = new Date();
 		var jwtExpirationInMinutes = 10;
@@ -56,7 +56,7 @@ public class JwtUtils {
 		return BEARER + Jwts.builder()
 				.id(UUID.randomUUID().toString())
 				.issuer(ISSUER)
-				.subject(username)
+				.subject(email)
 				.signWith(secretKey)
 				.issuedAt(currentDate)
 				.expiration(expiration)

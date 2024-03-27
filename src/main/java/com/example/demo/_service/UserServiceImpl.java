@@ -1,6 +1,5 @@
-package com.example.demo.service;
+package com.example.demo._service;
 
-import com.example.demo.configuration.JwtUtils;
 import com.example.demo.data.entity.RoleEntity;
 import com.example.demo.data.entity.UserEntity;
 import com.example.demo.data.enums.RoleType;
@@ -11,13 +10,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 import com.example.demo.dto.UserDTO;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -58,7 +54,6 @@ public class UserServiceImpl implements UserService {
                 .mapToObj(i -> generateUser())
                 .collect(Collectors.toList());
         stopWatch.stop();
-        //not working
         Logger.getAnonymousLogger().info("total Time for generating Users : " + stopWatch.getTotalTimeSeconds()/60 + " Mins");
         return userDTOList;
     }
@@ -98,15 +93,6 @@ public class UserServiceImpl implements UserService {
         }
         List<UserEntity> usersEnityList = this.transformDtoToEntity(userDTOList);
         return saveAllUsers(usersEnityList);
-    }
-
-    @Override
-    public UserDTO getActualUser(HttpServletRequest http) {
-        String token = JwtUtils.getTokenFromRequest(http).get();
-        String email = JwtUtils.getUsernameFromToken(token).get();
-        Optional<UserEntity> user = userRepository.findUserEntityByEmail(email);
-        return transformEntityToDto(user.get());
-
     }
 
     private List<UserEntity> transformDtoToEntity(List<UserDTO> usersList) {
@@ -181,11 +167,37 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
         Optional<UserEntity> userEntityByUsername = userRepository.findUserEntityByUsername(login);
-
         return userEntityByUsername
                 .or(() -> userRepository.findUserEntityByEmail(login))
                 .orElseThrow(() -> new UsernameNotFoundException("username or email not found"));
     }
 
+    @Override
+    public UserDTO getActualUser() {
+        String userActualEmail = ((UserEntity) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal()).getEmail();
+        UserEntity user = userRepository.findUserEntityByEmail(userActualEmail)
+                .orElseThrow(()-> new UsernameNotFoundException("username not found"));
+        return transformEntityToDto(user);
+
+    }
+
+    @Override
+    @SneakyThrows
+    public UserDTO viewProfil(String username) {
+        String userActualEmail = ((UserEntity) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal()).getEmail();
+        UserEntity user = userRepository.findUserEntityByEmail(userActualEmail)
+                .orElseThrow(()->new UsernameNotFoundException("logged user not found"));
+       boolean isAdmin = user.getRoles().stream()
+                    .anyMatch(role -> role.getRoleType() == RoleType.ADMIN);
+            if (isAdmin){
+                UserEntity viewingUser = userRepository.findUserEntityByUsername(username)
+                        .orElseThrow(()->new UsernameNotFoundException("username not found"));
+                return transformEntityToDto(viewingUser);
+            }
+
+        throw new Exception("the user specified is not an admin");
+    }
 
 }

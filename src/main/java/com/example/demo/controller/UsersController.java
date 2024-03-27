@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.CreationDetail;
-import com.example.demo._service.UserServiceImpl;
+import com.example.demo.service.UserServiceImpl;
 import com.example.demo.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;

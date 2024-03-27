@@ -1,4 +1,4 @@
-package com.example.demo._service;
+package com.example.demo.service;
 
 import com.example.demo.data.entity.RoleEntity;
 import com.example.demo.data.entity.UserEntity;
@@ -119,6 +119,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserDTO transformEntityToDto(UserEntity userEntity) {
+        List<String> roles = userEntity.getRoles().stream().map(role -> role.getRoleType().name()).collect(Collectors.toList());
         return  UserDTO.builder()
                     .firstName(userEntity.getFirstName())
                     .lastName(userEntity.getLastName())
@@ -132,7 +133,7 @@ public class UserServiceImpl implements UserService {
                     .email(userEntity.getEmail())
                     .username(userEntity.getUsername())
                     .password(userEntity.getPassword())
-                    .role(userEntity.getRoles().toString())
+                    .role(String.join(",", roles))
                     .build();
     }
 

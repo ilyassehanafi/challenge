@@ -1,4 +1,4 @@
-package com.example.demo._service;
+package com.example.demo.service;
 
 import com.example.demo.dto.CreationDetail;
 import com.example.demo.dto.UserDTO;

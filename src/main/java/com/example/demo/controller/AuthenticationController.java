@@ -2,7 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.AuthRequestDTO;
 import com.example.demo.dto.AuthResponseDTO;
-import com.example.demo._service.AuthenticationService;
+import com.example.demo.service.AuthenticationService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

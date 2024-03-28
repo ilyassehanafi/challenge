@@ -35,7 +35,8 @@ public class WebSecurityConfig  {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors(AbstractHttpConfigurer::disable)
             .csrf(AbstractHttpConfigurer::disable)
-            .headers(headerConfigurer-> headerConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+            .headers(headerConfigurer-> headerConfigurer
+                    .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
             .authorizeHttpRequests(
                     requestMatcher -> requestMatcher.
                             requestMatchers("/api/users/generate","/api/users/batch"
